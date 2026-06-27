@@ -1,0 +1,59 @@
+# Flybase pipeline defaults — adapted Stage-3 (integration / clustering / annotation).
+#
+# Mirrors ROSMAP_Code/Transcriptomics/config/pipeline.yaml stage3 block, but
+# tuned for the AFCA atlas, which is a SINGLE, PRE-NORMALIZED, already-annotated
+# object (X = log1p(normalize_total(counts, target_sum=1e4)); no raw counts in
+# .raw or .layers). Consequences baked in here:
+#   * input_mode "auto" detects normalized vs raw at runtime and skips
+#     re-normalization when the data is already log-normalized.
+#   * hvg_flavor defaults to "seurat" (valid on log-normalized data) rather than
+#     "seurat_v3" (which requires raw counts).
+#   * annotation trusts the atlas labels (afca_annotation); ORA is an optional,
+#     non-authoritative overlay only run if a fly marker RDS is supplied.
+
+stage3:
+  integration:
+    # --- input handling (AFCA is pre-normalized) ---
+    input_mode: "auto"          # auto | normalized | counts
+    target_sum: 10000           # the AFCA normalize_total target (for documentation/expm1 checks)
+    hvg_flavor: "seurat"        # seurat | cell_ranger (log-data flavors) | seurat_v3 (counts only)
+
+    # --- organism-specific QC tags (fly), used for metrics/plots only ---
+    mito_prefix: "mt:"          # Drosophila mitochondrial gene prefix
+    ribo_prefix: ["RpL", "RpS"] # Drosophila ribosomal protein gene prefixes
+    hb_regex: ""                # flies have no hemoglobin -> disabled
+
+    # --- embedding / clustering (same method as the human Stage 3) ---
+    n_hvgs: 3000
+    n_pcs: 50                   # bumped 30->50 for the 566k-cell / 163-type atlas
+    n_neighbors: 30
+    neighbor_metric: "cosine"
+    umap_min_dist: 0.15
+    harmony_theta: 2.0
+    leiden_resolutions: [0.2, 0.5, 1.0]
+    annotation_cluster_key: "leiden_res0_5"
+
+    # --- z-scaling before PCA (standard scanpy recipe) ---
+    # The AFCA authors AND the ROSMAP Stage-3 source both skip scaling; without
+    # it PCA is dominated by a few high-expression genes (fly mt:/RpL/RpS), which
+    # blurs clusters. Default ON; reproduce the old behavior with --no-scale.
+    scale: true
+    scale_max_value: 10
+
+    # --- optional adapted Stage-1 cell QC filter (off by default) ---
+    # Percentile filter on the PRECOMPUTED obs QC metrics (no raw counts needed),
+    # mirroring ROSMAP 01_qc_filter.py thresholds. AFCA is already QC'd upstream,
+    # so this stays OFF unless enabled with --qc-filter.
+    qc_filter: false
+    qc_counts_low_pct: 4.5
+    qc_counts_high_pct: 96.0
+    qc_genes_low_pct: 5.0
+    qc_mt_pct: 10.0
+
+    # --- quantitative cluster-quality evaluation (ported ROSMAP 03b) ---
+    eval: true
+    eval_subsample: 50000       # cells used for silhouette/LISI (0 = all)
+
+    # --- annotation ---
+    atlas_label_col: "afca_annotation"   # peer-reviewed labels copied into obs["cell_type"]
+    ora_marker_reference: ""             # optional fly marker RDS; empty -> ORA overlay skipped

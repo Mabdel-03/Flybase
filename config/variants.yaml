@@ -1,0 +1,55 @@
+# Flybase pipeline variants — mirrors the Transcriptomics variant schema.
+#
+# A variant is a named version of the Stage-3 integration. One is declared the
+# primary; `run_integrate.sh --variant primary` resolves to it. Each variant
+# sets a Harmony batch key (or skips Harmony) and a per-variant output leaf
+# under ${FLY_PROCESSING_OUTPUTS}/03_Integrated/<variant>.
+#
+# Batch-key options (confirmed present in obs of adata_headBody_S_v1.0.h5ad):
+#   sex     : female / male / mix
+#   age     : 5 / 30 / 50 / 70 (days)
+#   tissue  : head / body
+#   dataset : AFCA / FCA   (a genuine technical/source batch)
+# There is NO per-replicate/sample id column in this published object.
+#
+# Batch-vs-biology note: sex and age are BIOLOGICAL axes of this aging+sex atlas
+# — Harmonizing them erases real signal (use only as sensitivity runs). dataset
+# (AFCA vs FCA) is the one defensible technical batch: FCA contributes all the
+# 5-day cells, so the source is confounded with the youngest timepoint.
+# The primary is chosen FROM METRICS (Processing/compare_runs.py over the sweep:
+# no_harmony vs dataset vs sex); update `primary: fly:` to the winner afterward.
+
+# Primary chosen from the scaled sweep (Processing/compare_runs.py): Harmony on
+# `dataset` won — best fine-type ARI (0.40) and tied-best broad ARI (0.72) vs the
+# atlas labels, with clean technical-batch mixing (batch silhouette ~0) and no
+# over-correction. `sex` posted a higher silhouette but only by erasing the
+# biological sex axis (most-negative batch silhouette) — rejected as an artifact.
+primary:
+  fly: "dataset"
+
+datasets:
+  fly:
+    variants:
+      dataset:
+        role: "primary"
+        harmony_batch_key: "dataset"
+        output_leaf: "dataset"
+        description: "Harmony on AFCA-vs-FCA source — corrects the one genuine technical batch (FCA contributes all 5-day cells). Sweep winner; default integration."
+
+      sex:
+        role: "sensitivity"
+        harmony_batch_key: "sex"
+        output_leaf: "sex"
+        description: "Harmony correction on sex. SENSITIVITY ONLY — sex is biology in this atlas; correcting it over-mixes the sexes."
+
+      no_harmony:
+        role: "sensitivity"
+        skip_harmony: true
+        output_leaf: "no_harmony"
+        description: "No batch correction; PCA embedding used directly. Baseline."
+
+      age:
+        role: "experiment"
+        harmony_batch_key: "age"
+        output_leaf: "age"
+        description: "Harmony on age timepoint. SENSITIVITY ONLY — age is biology in this aging atlas."

@@ -1,0 +1,36 @@
+# =============================================================================
+# Umbrella Flybase repo.
+#
+# The four project stages are git SUBMODULES, each with its own repo + .gitignore:
+#   0 - Data Prep  -> github.com/Mabdel-03/Flybase-DataPrep
+#   1 - Platform   -> github.com/Mabdel-03/Flybase-MantisViewer
+#   2 - Cel Rep    -> github.com/Mabdel-03/Flybase-CellRep
+#   3 - Gene Rep   -> github.com/Mabdel-03/Flybase-GeneRep
+# Git treats each as an opaque gitlink, so rules below only apply to files that
+# live directly in the umbrella repo (config/, top-level scratch, etc.).
+# =============================================================================
+
+# --- Local / machine-specific config (not shared) ---
+config/paths.local.sh
+
+# --- Local harness / editor state ---
+.claude/
+
+# --- Generic large-data + generated-output guards (safety net) ---
+*.h5ad
+*.h5
+*.rds
+*.loom
+*.zarr/
+*.npy
+*.pt
+*.png
+*.pdf
+*.csv
+slurm-*.out
+*.log
+
+# --- Python / caches ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

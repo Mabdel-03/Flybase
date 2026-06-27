@@ -1,0 +1,12 @@
+[submodule "0 - Data Prep"]
+	path = 0 - Data Prep
+	url = git@github.com:Mabdel-03/Flybase-DataPrep.git
+[submodule "1 - Platform"]
+	path = 1 - Platform
+	url = git@github.com:Mabdel-03/Flybase-MantisViewer.git
+[submodule "2 - Cel Rep"]
+	path = 2 - Cel Rep
+	url = git@github.com:Mabdel-03/Flybase-CellRep.git
+[submodule "3 - Gene Rep"]
+	path = 3 - Gene Rep
+	url = git@github.com:Mabdel-03/Flybase-GeneRep.git

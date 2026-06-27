@@ -1,0 +1,41 @@
+#!/bin/bash
+# =============================================================================
+# Flybase — machine/user-specific overrides.
+#
+# Copy to config/paths.local.sh (gitignored) and edit. Everything here wins
+# over the defaults in config/paths.sh. You usually only need the conda block.
+#
+#   cp config/paths.local.sh.template config/paths.local.sh
+#   $EDITOR config/paths.local.sh
+# =============================================================================
+
+# --- Conda (point at YOUR miniforge / env base) ------------------------------
+# export CONDA_INIT_SCRIPT="/path/to/miniforge3/etc/profile.d/conda.sh"
+# export CONDA_ENV_BASE="/path/to/conda_envs"
+# export BATCHCORR_ENV="${CONDA_ENV_BASE}/BatchCorrection_SingleCell"
+
+# --- SLURM (pi_lhtsai or pi_manoli ONLY — never pi_tpoggio) -------------------
+# export SLURM_PARTITION="mit_normal"
+
+# --- Data / outputs (only if you keep them outside the repo) ------------------
+# export FLY_INPUT_H5AD="/orcd/data/lhtsai/001/mabdel03/Flybase/0 - Data Prep/data/adata_headBody_S_v1.0.h5ad"
+# export FLY_PROCESSING_OUTPUTS="/some/scratch/Flybase_outputs"
+
+# --- Optional fly marker set for the ORA cross-check overlay ------------------
+# export FLY_MARKERS_RDS="${REPO_ROOT}/0 - Data Prep/Resources/Fly_Markers.rds"
+
+# --- Cel Rep (2 - Cel Rep) conda env -----------------------------------------
+# Dedicated env for the cell-language co-embedding model (torch + transformers +
+# sentence-transformers + scanpy + umap-learn). Defaults to ${CONDA_ENV_BASE}/cel_rep.
+# export CEL_REP_ENV="${CONDA_ENV_BASE}/cel_rep"
+
+# --- Optional CELLxGENE public hosting overrides ------------------------------
+# export CXG_PUBLIC_HOSTNAME="fly-atlas.example.org"
+# export CXG_TUNNEL_NAME="cellxgene"
+# export CXG_PORT="5005"
+
+# --- MIT Engaging ready-to-copy block ----------------------------------------
+# export CONDA_INIT_SCRIPT="/orcd/data/lhtsai/001/om2/mabdel03/miniforge3/etc/profile.d/conda.sh"
+# export CONDA_ENV_BASE="/orcd/data/lhtsai/001/om2/mabdel03/conda_envs"
+# export BATCHCORR_ENV="${CONDA_ENV_BASE}/BatchCorrection_SingleCell"
+# export SLURM_PARTITION="mit_normal"
