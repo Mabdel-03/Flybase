@@ -81,6 +81,16 @@ export FLY_SERVE_DIR="${FLY_SERVE_DIR:-${REPO_ROOT}/1 - Platform/serve}"
 # public URL (see Serving/SETUP_TUNNEL.md).
 export CXG_PORT="${CXG_PORT:-5005}"
 
+# Interface the viewer binds on the compute node. Default 127.0.0.1 (loopback):
+# the SSH tunnel terminates on the node's loopback, so the unauthenticated viewer
+# is NOT reachable by other jobs/users on the cluster's internal network — the
+# tunnel is then genuine isolation. Set to 0.0.0.0 ONLY if you need to reach it
+# from another node directly (e.g. a simple `ssh -L PORT:<node>:PORT` tunnel);
+# that re-exposes the port cluster-internally, so prefer the loopback default +
+# the ProxyJump tunnel command the launcher prints. The Cloudflare public path
+# always binds loopback regardless (cloudflared connects to 127.0.0.1).
+export CXG_BIND_HOST="${CXG_BIND_HOST:-127.0.0.1}"
+
 # UI wrapper mode. "sleek" runs CELLxGENE on CXG_INTERNAL_PORT and exposes a
 # repo-tracked dark UI proxy on CXG_PORT. "native" serves CELLxGENE directly.
 export CXG_UI_MODE="${CXG_UI_MODE:-sleek}"
@@ -141,6 +151,7 @@ check_paths() {
     echo "CXG_DATASET            = ${CXG_DATASET}"
     echo "CXG_PORT               = ${CXG_PORT}"
     echo "CXG_INTERNAL_PORT      = ${CXG_INTERNAL_PORT}"
+    echo "CXG_BIND_HOST          = ${CXG_BIND_HOST}"
     echo "CXG_UI_MODE            = ${CXG_UI_MODE}"
     echo "CXG_UI_PROFILE         = ${CXG_UI_PROFILE}"
     echo "CXG_METADATA_PROFILE   = ${CXG_METADATA_PROFILE}"
