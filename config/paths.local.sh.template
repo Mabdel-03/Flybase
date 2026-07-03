@@ -19,15 +19,36 @@
 
 # --- Data / outputs (only if you keep them outside the repo) ------------------
 # export FLY_INPUT_H5AD="/orcd/data/lhtsai/001/mabdel03/Flybase/0 - Data Prep/data/adata_headBody_S_v1.0.h5ad"
-# export FLY_PROCESSING_OUTPUTS="/some/scratch/Flybase_outputs"
+# export FLY_OUTPUTS="/some/scratch/Flybase_outputs"
+# export FLY_PROCESSING_OUTPUTS="${FLY_OUTPUTS}"  # deprecated alias; optional
 
-# --- Optional fly marker set for the ORA cross-check overlay ------------------
-# export FLY_MARKERS_RDS="${REPO_ROOT}/0 - Data Prep/Resources/Fly_Markers.rds"
+# --- Optional fly marker references ------------------------------------------
+# export FLY_MARKER_DIR="${REPO_ROOT}/0 - Data Prep/references/markers"
+# export FLY_MARKERS_RDS="${FLY_MARKER_DIR}/Fly_Markers.rds"
+# export FLY_FCA_MARKERS_CSV="${FLY_MARKER_DIR}/fca_markers_by_celltype.csv"
+# export FLY_NEURON_MARKERS_CSV="${FLY_MARKER_DIR}/Fly_Neuron_Markers_curated.csv"
 
 # --- Cel Rep (2 - Cel Rep) conda env -----------------------------------------
 # Dedicated env for the cell-language co-embedding model (torch + transformers +
 # sentence-transformers + scanpy + umap-learn). Defaults to ${CONDA_ENV_BASE}/cel_rep.
 # export CEL_REP_ENV="${CONDA_ENV_BASE}/cel_rep"
+# Optional Cel Rep storage overrides if large artifacts live outside the repo.
+# The bucket is split into Drosophila/ (reference) and Interspecies/ (new) roots;
+# FLY_CEL_REP_* target the Drosophila root, FLY_CEL_REP_INTERSPECIES_* the other.
+# export FLY_CEL_REP_DATA="${REPO_ROOT}/2 - Cel Rep/Drosophila/data"
+# export FLY_CEL_REP_EVALUATIONS="${REPO_ROOT}/2 - Cel Rep/Drosophila/evaluations"
+# export FLY_CEL_REP_MODEL_WEIGHTS="${FLY_CEL_REP_DATA}/model_weights"
+# export FLY_CEL_REP_INTERSPECIES_DATA="${REPO_ROOT}/2 - Cel Rep/Interspecies/data"
+
+# --- Gene Rep (3 - Gene Rep) conda env + encoders ----------------------------
+# Dedicated env for the protein<->text CLIP model (torch + fair-esm + transformers
+# + biopython + requests + scikit-learn). Defaults to ${CONDA_ENV_BASE}/gene_rep.
+# export GENE_REP_ENV="${CONDA_ENV_BASE}/gene_rep"
+# export GENE_REP_ESM_MODEL="facebook/esm2_t36_3B_UR50D"        # 2560-d protein emb
+# export GENE_REP_TEXT_MODEL="monologg/biobert_v1.1_pubmed"     # 768-d text emb
+# Optional storage overrides if large artifacts live outside the repo.
+# export FLY_GENE_REP_DATA="${REPO_ROOT}/3 - Gene Rep/data"
+# export FLY_GENE_REP_MODEL_WEIGHTS="${FLY_GENE_REP_DATA}/model_weights"
 
 # --- Optional CELLxGENE public hosting overrides ------------------------------
 # export CXG_PUBLIC_HOSTNAME="fly-atlas.example.org"

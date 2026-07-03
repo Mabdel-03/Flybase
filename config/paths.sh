@@ -30,40 +30,133 @@ export BATCHCORR_ENV="${BATCHCORR_ENV:-${CONDA_ENV_BASE}/BatchCorrection_SingleC
 # pi_lhtsai / pi_manoli only — never pi_tpoggio.
 export SLURM_PARTITION="${SLURM_PARTITION:-mit_normal}"
 
-# --- Data & outputs -----------------------------------------------------------
+# --- Data Prep paths ----------------------------------------------------------
+export FLY_DATA_PREP_DIR="${FLY_DATA_PREP_DIR:-${REPO_ROOT}/0 - Data Prep}"
+export FLY_WORKFLOW_DIR="${FLY_WORKFLOW_DIR:-${FLY_DATA_PREP_DIR}/workflow}"
+export FLY_INGEST_WORKFLOW="${FLY_INGEST_WORKFLOW:-${FLY_WORKFLOW_DIR}/ingest}"
+export FLY_INSPECT_WORKFLOW="${FLY_INSPECT_WORKFLOW:-${FLY_WORKFLOW_DIR}/inspect}"
+export FLY_STAGE3_WORKFLOW="${FLY_STAGE3_WORKFLOW:-${FLY_WORKFLOW_DIR}/stage3_integration}"
+export FLY_STAGE4_WORKFLOW="${FLY_STAGE4_WORKFLOW:-${FLY_WORKFLOW_DIR}/stage4_subclustering}"
+export FLY_STAGE5_WORKFLOW="${FLY_STAGE5_WORKFLOW:-${FLY_WORKFLOW_DIR}/stage5_annotation}"
+export FLY_FIGURE_WORKFLOW="${FLY_FIGURE_WORKFLOW:-${FLY_WORKFLOW_DIR}/figures_diagnostics}"
+
 # The AFCA atlas .h5ad (~3 GB) lives under "0 - Data Prep/data" (gitignored). It is
-# fetched by "0 - Data Prep/scripts/download_afca.sh".
-export FLY_INPUT_H5AD="${FLY_INPUT_H5AD:-${REPO_ROOT}/0 - Data Prep/data/adata_headBody_S_v1.0.h5ad}"
+# fetched by "0 - Data Prep/workflow/ingest/download_afca.sh".
+export FLY_INPUT_H5AD="${FLY_INPUT_H5AD:-${FLY_DATA_PREP_DIR}/data/adata_headBody_S_v1.0.h5ad}"
 
-# Processing outputs (gitignored). Stage-3 writes the integrated/annotated
-# object + figures here, namespaced per variant.
-export FLY_PROCESSING_OUTPUTS="${FLY_PROCESSING_OUTPUTS:-${REPO_ROOT}/0 - Data Prep/outputs}"
-export FLY_LOGS="${FLY_LOGS:-${FLY_PROCESSING_OUTPUTS}/Logs}"
+# Processing outputs (gitignored). FLY_PROCESSING_OUTPUTS is a compatibility
+# alias for the canonical output root, not an old-layout path.
+export FLY_OUTPUTS="${FLY_OUTPUTS:-${FLY_PROCESSING_OUTPUTS:-${FLY_DATA_PREP_DIR}/outputs}}"
+export FLY_PROCESSING_OUTPUTS="${FLY_PROCESSING_OUTPUTS:-${FLY_OUTPUTS}}"
+export FLY_STAGE3_OUTPUTS="${FLY_STAGE3_OUTPUTS:-${FLY_OUTPUTS}/stage3_integrations}"
+export FLY_STAGE4_OUTPUTS="${FLY_STAGE4_OUTPUTS:-${FLY_OUTPUTS}/stage4_subclusters}"
+export FLY_STAGE5_OUTPUTS="${FLY_STAGE5_OUTPUTS:-${FLY_OUTPUTS}/stage5_annotations}"
+export FLY_COMPARISON_OUTPUTS="${FLY_COMPARISON_OUTPUTS:-${FLY_OUTPUTS}/comparisons}"
+export FLY_FIGURE_OUTPUTS="${FLY_FIGURE_OUTPUTS:-${FLY_OUTPUTS}/figures}"
+export FLY_LOGS="${FLY_LOGS:-${FLY_OUTPUTS}/logs}"
 
-# Optional fly marker set for the ORA cross-check overlay (not on the critical
-# path — if unset/missing, ORA is skipped and afca_annotation is used directly).
-export FLY_MARKERS_RDS="${FLY_MARKERS_RDS:-${REPO_ROOT}/0 - Data Prep/Resources/Fly_Markers.rds}"
+# Optional fly marker references. ORA RDS is optional; curated CSV panels are used
+# by the v2 annotation and neuron-annotation workflows.
+export FLY_MARKER_DIR="${FLY_MARKER_DIR:-${FLY_DATA_PREP_DIR}/references/markers}"
+export FLY_MARKERS_RDS="${FLY_MARKERS_RDS:-${FLY_MARKER_DIR}/Fly_Markers.rds}"
+export FLY_FCA_MARKERS_CSV="${FLY_FCA_MARKERS_CSV:-${FLY_MARKER_DIR}/fca_markers_by_celltype.csv}"
+export FLY_NEURON_MARKERS_CSV="${FLY_NEURON_MARKERS_CSV:-${FLY_MARKER_DIR}/Fly_Neuron_Markers_curated.csv}"
 
 # Config files consumed by the pipeline.
 export FLY_PIPELINE_YAML="${FLY_PIPELINE_YAML:-${_CONFIG_DIR}/pipeline.yaml}"
 export FLY_VARIANTS_YAML="${FLY_VARIANTS_YAML:-${_CONFIG_DIR}/variants.yaml}"
 
 # --- Cel Rep (2 - Cel Rep): cell-language co-embedding ------------------------
-# Multimodal Cell2Sentence + CLIP ("CellCLIP") model for the FCA/AFCA fly atlas,
-# adapted from a collaborator's FlyBaseAdrita work. Code lives in
-# "2 - Cel Rep/Processing"; large inputs/intermediates (h5ad, .npy, .pt, .csv)
-# live in "2 - Cel Rep/data" (gitignored) and are surfaced to the CWD-based Python
-# via relative symlinks in Processing/. Figures land in "2 - Cel Rep/outputs".
-export FLY_CEL_REP_DIR="${FLY_CEL_REP_DIR:-${REPO_ROOT}/2 - Cel Rep}"
+# Multimodal Cell2Sentence + CLIP ("CellCLIP") cell<->text alignment. The bucket
+# is split into two parallel roots that share the same workflow structure:
+#   Drosophila/   single-species FCA/AFCA reference implementation (all prior work)
+#   Interspecies/ new CellWhisperer-style interspecies initiative (skeleton)
+# Each root is organized by workflow stage, with data/model artifacts under
+# data/, training under model_training/, inference under model_inference/, and
+# evaluation outputs under evaluations/.
+export FLY_CEL_REP_BUCKET="${FLY_CEL_REP_BUCKET:-${REPO_ROOT}/2 - Cel Rep}"
+
+# Drosophila root. FLY_CEL_REP_DIR (and its unsuffixed FLY_CEL_REP_* siblings)
+# point HERE so existing fly scripts and downstream consumers (e.g. 3 - Gene Rep)
+# keep resolving to the single-species work without change.
+export FLY_CEL_REP_DIR="${FLY_CEL_REP_DIR:-${FLY_CEL_REP_BUCKET}/Drosophila}"
 export FLY_CEL_REP_DATA="${FLY_CEL_REP_DATA:-${FLY_CEL_REP_DIR}/data}"
-export FLY_CEL_REP_OUTPUTS="${FLY_CEL_REP_OUTPUTS:-${FLY_CEL_REP_DIR}/outputs}"
-export FLY_CEL_REP_LOGS="${FLY_CEL_REP_LOGS:-${FLY_CEL_REP_OUTPUTS}/Logs}"
+export FLY_CEL_REP_TRAINING="${FLY_CEL_REP_TRAINING:-${FLY_CEL_REP_DIR}/model_training}"
+export FLY_CEL_REP_INFERENCE="${FLY_CEL_REP_INFERENCE:-${FLY_CEL_REP_DIR}/model_inference}"
+export FLY_CEL_REP_EVALUATIONS="${FLY_CEL_REP_EVALUATIONS:-${FLY_CEL_REP_DIR}/evaluations}"
+export FLY_CEL_REP_MODEL_WEIGHTS="${FLY_CEL_REP_MODEL_WEIGHTS:-${FLY_CEL_REP_DATA}/model_weights}"
+# Deprecated compatibility alias: old scripts used FLY_CEL_REP_OUTPUTS for the
+# output root. New code should prefer FLY_CEL_REP_EVALUATIONS.
+export FLY_CEL_REP_OUTPUTS="${FLY_CEL_REP_OUTPUTS:-${FLY_CEL_REP_EVALUATIONS}}"
+export FLY_CEL_REP_LOGS="${FLY_CEL_REP_LOGS:-${FLY_CEL_REP_EVALUATIONS}/logs/slurm}"
+
+# Explicit Drosophila-scoped aliases (mirror the unsuffixed vars above; use these
+# when a script needs to be unambiguous about which root it targets).
+export FLY_CEL_REP_DROSOPHILA_DIR="${FLY_CEL_REP_DROSOPHILA_DIR:-${FLY_CEL_REP_DIR}}"
+export FLY_CEL_REP_DROSOPHILA_DATA="${FLY_CEL_REP_DROSOPHILA_DATA:-${FLY_CEL_REP_DATA}}"
+export FLY_CEL_REP_DROSOPHILA_TRAINING="${FLY_CEL_REP_DROSOPHILA_TRAINING:-${FLY_CEL_REP_TRAINING}}"
+export FLY_CEL_REP_DROSOPHILA_INFERENCE="${FLY_CEL_REP_DROSOPHILA_INFERENCE:-${FLY_CEL_REP_INFERENCE}}"
+export FLY_CEL_REP_DROSOPHILA_EVALUATIONS="${FLY_CEL_REP_DROSOPHILA_EVALUATIONS:-${FLY_CEL_REP_EVALUATIONS}}"
+export FLY_CEL_REP_DROSOPHILA_MODEL_WEIGHTS="${FLY_CEL_REP_DROSOPHILA_MODEL_WEIGHTS:-${FLY_CEL_REP_MODEL_WEIGHTS}}"
+export FLY_CEL_REP_DROSOPHILA_LOGS="${FLY_CEL_REP_DROSOPHILA_LOGS:-${FLY_CEL_REP_LOGS}}"
+
+# Interspecies root. New initiative; mirrors the Drosophila layout. Its
+# celrep/paths.py reads these FLY_CEL_REP_INTERSPECIES_* overrides.
+export FLY_CEL_REP_INTERSPECIES_DIR="${FLY_CEL_REP_INTERSPECIES_DIR:-${FLY_CEL_REP_BUCKET}/Interspecies}"
+export FLY_CEL_REP_INTERSPECIES_DATA="${FLY_CEL_REP_INTERSPECIES_DATA:-${FLY_CEL_REP_INTERSPECIES_DIR}/data}"
+export FLY_CEL_REP_INTERSPECIES_TRAINING="${FLY_CEL_REP_INTERSPECIES_TRAINING:-${FLY_CEL_REP_INTERSPECIES_DIR}/model_training}"
+export FLY_CEL_REP_INTERSPECIES_INFERENCE="${FLY_CEL_REP_INTERSPECIES_INFERENCE:-${FLY_CEL_REP_INTERSPECIES_DIR}/model_inference}"
+export FLY_CEL_REP_INTERSPECIES_EVALUATIONS="${FLY_CEL_REP_INTERSPECIES_EVALUATIONS:-${FLY_CEL_REP_INTERSPECIES_DIR}/evaluations}"
+export FLY_CEL_REP_INTERSPECIES_MODEL_WEIGHTS="${FLY_CEL_REP_INTERSPECIES_MODEL_WEIGHTS:-${FLY_CEL_REP_INTERSPECIES_DATA}/model_weights}"
+export FLY_CEL_REP_INTERSPECIES_LOGS="${FLY_CEL_REP_INTERSPECIES_LOGS:-${FLY_CEL_REP_INTERSPECIES_EVALUATIONS}/logs/slurm}"
 
 # Dedicated conda env for the co-embedding model. NOT the heavy BatchCorrection
 # env — this one needs torch + transformers + sentence-transformers + scanpy +
 # umap-learn + scikit-learn. It must be created before running (see
-# "2 - Cel Rep/README.md"); override the name/location in paths.local.sh.
+# "2 - Cel Rep/Drosophila/README.md"); override the name/location in paths.local.sh.
 export CEL_REP_ENV="${CEL_REP_ENV:-${CONDA_ENV_BASE}/cel_rep}"
+
+# Isolated env for the TranscriptFormer foundation-model cell embedder. Kept
+# SEPARATE from cel_rep because TranscriptFormer pins torch==2.5.1 (breaks on
+# >=2.6) while cel_rep is on torch 2.3.1 — do not merge them. Created with
+# `mamba create -p "${TF_ENV}" python=3.11` + `pip install transcriptformer`
+# (cu124 torch wheel covers L40S sm_89 / H200 sm_90). Override in paths.local.sh.
+export TF_ENV="${TF_ENV:-${CONDA_ENV_BASE}/transcriptformer}"
+# Large TranscriptFormer weights + gene-embedding .h5 files + inference outputs
+# live on scratch (not the data share). Holds tf-metazoa/ checkpoint and the
+# drosophila_melanogaster_gene.h5 protein embeddings.
+export TF_HOME="${TF_HOME:-/orcd/scratch/orcd/012/mabdel03/transcriptformer}"
+
+# --- Gene Rep (3 - Gene Rep): protein-language co-embedding -------------------
+# Joint ESM(protein) <-> BioBERT(FlyBase description) CLIP for every Drosophila
+# protein-coding gene. Reuses the 2 - Cel Rep/Drosophila projection head + InfoNCE
+# loss verbatim (imported, not copied). Workspace mirrors Cel Rep: data prep under
+# data_prep/, embedding + CLIP training under model_training/, evals under
+# evaluations/, shared helpers in generep/.
+export FLY_GENE_REP_DIR="${FLY_GENE_REP_DIR:-${REPO_ROOT}/3 - Gene Rep}"
+export FLY_GENE_REP_DATA="${FLY_GENE_REP_DATA:-${FLY_GENE_REP_DIR}/data}"
+export FLY_GENE_REP_TRAINING="${FLY_GENE_REP_TRAINING:-${FLY_GENE_REP_DIR}/model_training}"
+export FLY_GENE_REP_INFERENCE="${FLY_GENE_REP_INFERENCE:-${FLY_GENE_REP_DIR}/model_inference}"
+export FLY_GENE_REP_EVALUATIONS="${FLY_GENE_REP_EVALUATIONS:-${FLY_GENE_REP_DIR}/evaluations}"
+export FLY_GENE_REP_MODEL_WEIGHTS="${FLY_GENE_REP_MODEL_WEIGHTS:-${FLY_GENE_REP_DATA}/model_weights}"
+export FLY_GENE_REP_LOGS="${FLY_GENE_REP_LOGS:-${FLY_GENE_REP_EVALUATIONS}/logs/slurm}"
+
+# Dedicated env for Gene Rep. Owns its OWN env (does not borrow cel_rep, tf, or
+# consortium). Needs torch (CUDA-matched: L40S sm_89 / H200 sm_90) + fair-esm +
+# transformers + biopython + requests + scikit-learn + pandas. This single env
+# covers the ESM embedding pass, all FlyBase data fetch/prep, and eval-label
+# fetching. Create it before running (see 3 - Gene Rep/README.md); override in
+# paths.local.sh. NOTE: the BioBERT text pass can alternatively run in cel_rep
+# (transformers already present, no ESM needed there).
+export GENE_REP_ENV="${GENE_REP_ENV:-${CONDA_ENV_BASE}/gene_rep}"
+
+# Encoder model ids (overridable). ESM-2 3B -> 2560-d protein embeddings;
+# BioBERT base -> 768-d text embeddings.
+export GENE_REP_ESM_MODEL="${GENE_REP_ESM_MODEL:-facebook/esm2_t36_3B_UR50D}"
+# BioBERT v1.1 (PubMed). monologg mirror ships safetensors + full config, so it
+# loads under transformers 5.x + torch<2.6 (dmis-lab ships only .bin, now blocked
+# by the torch.load security gate). Same weights, 768-d.
+export GENE_REP_TEXT_MODEL="${GENE_REP_TEXT_MODEL:-monologg/biobert_v1.1_pubmed}"
 
 # --- CELLxGENE serving (Serving/) --------------------------------------------
 # A separate, lightweight conda env holds the cellxgene Annotate viewer
@@ -141,12 +234,37 @@ check_paths() {
     local mode="${1:-default}"
     local ok=1
     echo "REPO_ROOT              = ${REPO_ROOT}"
+    echo "FLY_DATA_PREP_DIR      = ${FLY_DATA_PREP_DIR}"
+    echo "FLY_WORKFLOW_DIR       = ${FLY_WORKFLOW_DIR}"
     echo "FLY_INPUT_H5AD         = ${FLY_INPUT_H5AD}"
+    echo "FLY_OUTPUTS            = ${FLY_OUTPUTS}"
     echo "FLY_PROCESSING_OUTPUTS = ${FLY_PROCESSING_OUTPUTS}"
+    echo "FLY_STAGE3_OUTPUTS     = ${FLY_STAGE3_OUTPUTS}"
+    echo "FLY_STAGE4_OUTPUTS     = ${FLY_STAGE4_OUTPUTS}"
+    echo "FLY_STAGE5_OUTPUTS     = ${FLY_STAGE5_OUTPUTS}"
+    echo "FLY_COMPARISON_OUTPUTS = ${FLY_COMPARISON_OUTPUTS}"
+    echo "FLY_FIGURE_OUTPUTS     = ${FLY_FIGURE_OUTPUTS}"
+    echo "FLY_LOGS               = ${FLY_LOGS}"
     echo "BATCHCORR_ENV          = ${BATCHCORR_ENV}"
-    echo "FLY_CEL_REP_DIR        = ${FLY_CEL_REP_DIR}"
+    echo "FLY_CEL_REP_BUCKET     = ${FLY_CEL_REP_BUCKET}"
+    echo "FLY_CEL_REP_DIR        = ${FLY_CEL_REP_DIR}   (Drosophila root)"
     echo "FLY_CEL_REP_DATA       = ${FLY_CEL_REP_DATA}"
+    echo "FLY_CEL_REP_TRAINING   = ${FLY_CEL_REP_TRAINING}"
+    echo "FLY_CEL_REP_INFERENCE  = ${FLY_CEL_REP_INFERENCE}"
+    echo "FLY_CEL_REP_EVALUATIONS= ${FLY_CEL_REP_EVALUATIONS}"
+    echo "FLY_CEL_REP_MODEL_WEIGHTS = ${FLY_CEL_REP_MODEL_WEIGHTS}"
+    echo "FLY_CEL_REP_INTERSPECIES_DIR = ${FLY_CEL_REP_INTERSPECIES_DIR}"
     echo "CEL_REP_ENV            = ${CEL_REP_ENV}"
+    echo "TF_ENV                 = ${TF_ENV}"
+    echo "TF_HOME                = ${TF_HOME}"
+    echo "FLY_GENE_REP_DIR       = ${FLY_GENE_REP_DIR}"
+    echo "FLY_GENE_REP_DATA      = ${FLY_GENE_REP_DATA}"
+    echo "FLY_GENE_REP_TRAINING  = ${FLY_GENE_REP_TRAINING}"
+    echo "FLY_GENE_REP_EVALUATIONS = ${FLY_GENE_REP_EVALUATIONS}"
+    echo "FLY_GENE_REP_MODEL_WEIGHTS = ${FLY_GENE_REP_MODEL_WEIGHTS}"
+    echo "GENE_REP_ENV           = ${GENE_REP_ENV}"
+    echo "GENE_REP_ESM_MODEL     = ${GENE_REP_ESM_MODEL}"
+    echo "GENE_REP_TEXT_MODEL    = ${GENE_REP_TEXT_MODEL}"
     echo "SLURM_PARTITION        = ${SLURM_PARTITION}"
     echo "CXG_DATASET            = ${CXG_DATASET}"
     echo "CXG_PORT               = ${CXG_PORT}"
@@ -162,7 +280,7 @@ check_paths() {
     echo "CXG_TUNNEL_NAME        = ${CXG_TUNNEL_NAME}"
     echo "CXG_PUBLIC_HOSTNAME    = ${CXG_PUBLIC_HOSTNAME}"
     if [[ ! -f "${FLY_INPUT_H5AD}" ]]; then
-        echo "WARNING: FLY_INPUT_H5AD does not exist yet — run '0 - Data Prep/scripts/download_afca.sh'"
+        echo "WARNING: FLY_INPUT_H5AD does not exist yet — run '0 - Data Prep/workflow/ingest/download_afca.sh'"
         ok=0
     fi
     if [[ ! -f "${CXG_DATASET}" ]]; then
@@ -181,9 +299,19 @@ check_paths() {
     if [[ ! -f "${FLY_MARKERS_RDS}" ]]; then
         echo "NOTE: FLY_MARKERS_RDS not present (optional) — ORA overlay will be skipped."
     fi
+    if [[ ! -f "${FLY_FCA_MARKERS_CSV}" ]]; then
+        echo "NOTE: FLY_FCA_MARKERS_CSV not present: ${FLY_FCA_MARKERS_CSV}"
+    fi
+    if [[ ! -f "${FLY_NEURON_MARKERS_CSV}" ]]; then
+        echo "NOTE: FLY_NEURON_MARKERS_CSV not present: ${FLY_NEURON_MARKERS_CSV}"
+    fi
     if [[ ! -d "${CEL_REP_ENV}" ]]; then
         echo "NOTE: CEL_REP_ENV not present yet: ${CEL_REP_ENV}"
         echo "      (only needed for '2 - Cel Rep' — create it per that README.)"
+    fi
+    if [[ ! -d "${GENE_REP_ENV}" ]]; then
+        echo "NOTE: GENE_REP_ENV not present yet: ${GENE_REP_ENV}"
+        echo "      (only needed for '3 - Gene Rep' — create it per that README.)"
     fi
     if [[ "${mode}" == "public" ]]; then
         local cf_config="${HOME}/.cloudflared/config.yml"
