@@ -66,6 +66,19 @@ export FLY_NEURON_MARKERS_CSV="${FLY_NEURON_MARKERS_CSV:-${FLY_MARKER_DIR}/Fly_N
 export FLY_PIPELINE_YAML="${FLY_PIPELINE_YAML:-${_CONFIG_DIR}/pipeline.yaml}"
 export FLY_VARIANTS_YAML="${FLY_VARIANTS_YAML:-${_CONFIG_DIR}/variants.yaml}"
 
+# --- Platform (1 - Platform/processing_v0): interactive processing + viz --------
+# The dataset-agnostic processing/visualization platform reads these via its
+# SDK (flybase_shared.paths.paths_env sources THIS file). All runtime artifacts
+# (uploads, run work dirs, Slurm logs) MUST live on a SPACE-FREE root: the repo
+# path contains spaces ("1 - Platform") and Slurm jobs die when --output/--error
+# paths contain spaces. Scratch has ~249T free; keep the DB on data (persistent).
+export FLYBASE_PLATFORM_DIR="${FLYBASE_PLATFORM_DIR:-${REPO_ROOT}/1 - Platform}"
+export FLYBASE_CONFIG_DIR="${FLYBASE_CONFIG_DIR:-${FLYBASE_PLATFORM_DIR}/configs}"
+export FLYBASE_DATA_ROOT="${FLYBASE_DATA_ROOT:-/orcd/scratch/orcd/012/mabdel03/flybase_data}"
+export FLYBASE_DB_URL="${FLYBASE_DB_URL:-sqlite:///${REPO_ROOT}/1 - Platform/flybase.db}"
+export FLYBASE_DEV_USER_ID="${FLYBASE_DEV_USER_ID:-user_dev}"
+export FLYBASE_DEV_PROJECT_ID="${FLYBASE_DEV_PROJECT_ID:-proj_dev}"
+
 # --- Cel Rep (2 - Cel Rep): cell-language co-embedding ------------------------
 # Multimodal Cell2Sentence + CLIP ("CellCLIP") cell<->text alignment. The bucket
 # is split into two parallel roots that share the same workflow structure:
@@ -115,6 +128,16 @@ export FLY_CEL_REP_INTERSPECIES_LOGS="${FLY_CEL_REP_INTERSPECIES_LOGS:-${FLY_CEL
 # umap-learn + scikit-learn. It must be created before running (see
 # "2 - Cel Rep/Drosophila/README.md"); override the name/location in paths.local.sh.
 export CEL_REP_ENV="${CEL_REP_ENV:-${CONDA_ENV_BASE}/cel_rep}"
+
+# Dedicated env for the Interspecies xcell_lang package (2 - Cel Rep/Interspecies).
+# NOT cel_rep: this one adds pyarrow + pydantic + pytest + hydra-core/omegaconf and
+# is a `pip install -e .` of the src/xcell_lang package (so imports survive the
+# spaced "2 - Cel Rep" dir). Built by Interspecies/slurm/sbatch_make_env.sh on a CPU
+# partition (CUDA-matched torch cu121 first). Override name/location in paths.local.sh.
+export XCELL_ENV="${XCELL_ENV:-${CONDA_ENV_BASE}/xcell_lang}"
+# Space-free scratch log dir for xcell_lang SLURM jobs (spaces in "2 - Cel Rep"
+# break SLURM user-env retrieval — never point --output/--error inside the repo).
+export XCELL_LOGS="${XCELL_LOGS:-/orcd/scratch/orcd/012/mabdel03/xcell_lang/logs}"
 
 # Isolated env for the TranscriptFormer foundation-model cell embedder. Kept
 # SEPARATE from cel_rep because TranscriptFormer pins torch==2.5.1 (breaks on

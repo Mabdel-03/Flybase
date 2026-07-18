@@ -3,23 +3,27 @@
 # A variant is a named version of the Stage-3 integration. One is declared the
 # primary; `run_integrate.sh --variant primary` resolves to it. Each variant
 # sets a Harmony batch key (or skips Harmony) and a per-variant output leaf
-# under ${FLY_PROCESSING_OUTPUTS}/03_Integrated/<variant>.
+# under ${FLY_STAGE3_OUTPUTS}/variants/<variant> unless an experiment launcher
+# provides a more specific output directory.
 #
 # Batch-key options (confirmed present in obs of adata_headBody_S_v1.0.h5ad):
 #   sex     : female / male / mix
 #   age     : 5 / 30 / 50 / 70 (days)
 #   tissue  : head / body
 #   dataset : AFCA / FCA   (a genuine technical/source batch)
-# There is NO per-replicate/sample id column in this published object.
+#   sample  : NOT a real obs column — derived on the fly from the cell barcodes
+#             by integrate_annotate.derive_sample_batch (AFCA S-code x sex_age;
+#             FCA 10x-run id). Used by the per-dataset variants below to Harmonize
+#             the within-dataset technical replicate after a `dataset=` subset.
 #
 # Batch-vs-biology note: sex and age are BIOLOGICAL axes of this aging+sex atlas
 # — Harmonizing them erases real signal (use only as sensitivity runs). dataset
 # (AFCA vs FCA) is the one defensible technical batch: FCA contributes all the
 # 5-day cells, so the source is confounded with the youngest timepoint.
-# The primary is chosen FROM METRICS (Processing/compare_runs.py over the sweep:
+# The primary is chosen FROM METRICS (workflow/stage3_integration/compare_runs.py over the sweep:
 # no_harmony vs dataset vs sex); update `primary: fly:` to the winner afterward.
 
-# Primary chosen from the scaled sweep (Processing/compare_runs.py): Harmony on
+# Primary chosen from the scaled sweep (workflow/stage3_integration/compare_runs.py): Harmony on
 # `dataset` won — best fine-type ARI (0.40) and tied-best broad ARI (0.72) vs the
 # atlas labels, with clean technical-batch mixing (batch silhouette ~0) and no
 # over-correction. `sex` posted a higher silhouette but only by erasing the
@@ -53,3 +57,19 @@ datasets:
         harmony_batch_key: "age"
         output_leaf: "age"
         description: "Harmony on age timepoint. SENSITIVITY ONLY — age is biology in this aging atlas."
+
+      # --- Per-dataset re-embeddings: process AFCA and FCA SEPARATELY (no cross-
+      #     dataset correction). Pair each with --subset-obs "dataset=AFCA|FCA".
+      #     'sample' is recovered from barcodes; Harmony corrects the within-dataset
+      #     10x replicate only (sex/age left intact as biology). ---
+      afca_only:
+        role: "experiment"
+        harmony_batch_key: "sample"
+        output_leaf: "afca_only"
+        description: "AFCA cells only (ages 30/50/70). Harmony on within-AFCA sample (S-code x sex_age, from barcodes); NO cross-dataset correction. Pair with --subset-obs dataset=AFCA."
+
+      fca_only:
+        role: "experiment"
+        harmony_batch_key: "sample"
+        output_leaf: "fca_only"
+        description: "FCA cells only (age 5). Harmony on within-FCA sample (10x run id, from barcodes); NO cross-dataset correction. Pair with --subset-obs dataset=FCA."
